@@ -1,0 +1,33 @@
+# IDE/Editor
+.vscode/
+.idea/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+crash.log
+
+# CI/CD
+config/*.json
+!config/*.json.example
+
+# Local Devcontainer
+.devcontainer/*
+
+# local environment files
+*.local*
+
+# Secrets & Credentials
+.env
+.env.*
+*.key
+*.pem
+credentials.*
+*-key.json
+*service-account*.json
+.secrets
