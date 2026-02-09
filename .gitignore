@@ -31,3 +31,9 @@ credentials.*
 *-key.json
 *service-account*.json
 .secrets
+
+# Bicep / Azure
+.azure/
+deployment-outputs*.json
+*.json.bak
+azuredeploy.parameters.local.json
