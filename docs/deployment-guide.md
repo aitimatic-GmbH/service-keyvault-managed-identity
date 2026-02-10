@@ -30,8 +30,8 @@
 
 Was passiert:
 - Resource Group `rg-kvmi-dev` wird erstellt (falls nicht vorhanden)
-- `az deployment group what-if` zeigt an was erstellt/geaendert/geloescht wird
-- **Kein tatsaechliches Deployment** -- nur eine Vorschau
+- `az deployment group what-if` zeigt an was erstellt/geändert/gelöscht wird
+- **Kein tatsächliches Deployment** -- nur eine Vorschau
 
 ### Schritt 2: Deployen
 
@@ -41,14 +41,14 @@ Was passiert:
 
 Was passiert:
 - Resource Group `rg-kvmi-dev` wird erstellt (falls nicht vorhanden)
-- Bicep wird kompiliert und als ARM-Deployment ausgefuehrt
-- Modus: **Incremental** (nur hinzufuegen/aendern, nie loeschen)
+- Bicep wird kompiliert und als ARM-Deployment ausgeführt
+- Modus: **Incremental** (nur hinzufügen/ändern, nie löschen)
 - Key Vault `kv-kvmi-dev` wird erstellt
 
 ### Schritt 3: Verifizieren
 
 ```bash
-# Key Vault pruefen
+# Key Vault prüfen
 az keyvault show --name kv-kvmi-dev --query '{
   name: name,
   rbac: properties.enableRbacAuthorization,
@@ -57,7 +57,7 @@ az keyvault show --name kv-kvmi-dev --query '{
   sku: properties.sku.name
 }'
 
-# Test-Secret erstellen (erfordert Key Vault Administrator Rolle fuer deinen User)
+# Test-Secret erstellen (erfordert Key Vault Administrator Rolle für deinen User)
 az keyvault secret set \
   --vault-name kv-kvmi-dev \
   --name test-secret \
@@ -72,7 +72,7 @@ az keyvault secret show \
 
 ### Schritt 4: Web App aktivieren (Phase 3)
 
-In `infra/environments/dev.bicepparam` hinzufuegen:
+In `infra/environments/dev.bicepparam` hinzufügen:
 ```bicep
 param deployWebApp = true
 ```
@@ -100,9 +100,46 @@ curl https://app-kvmi-dev.azurewebsites.net/
 curl https://app-kvmi-dev.azurewebsites.net/secret/test-secret
 ```
 
-### Schritt 5: Azure Functions aktivieren (Phase 5)
+### Schritt 5: Networking aktivieren (Phase 4)
 
 In `infra/environments/dev.bicepparam` hinzufügen:
+```bicep
+param deployNetworking = true
+```
+
+Dann erneut deployen:
+```bash
+./scripts/deploy.sh dev
+```
+
+Neue Ressourcen:
+- `vnet-kvmi-dev` -- VNet (10.0.0.0/16) mit 4 Subnets
+- `pep-kv-kvmi-dev` -- Private Endpoint für Key Vault
+- Private DNS Zone `privatelink.vaultcore.azure.net`
+- Key Vault `publicNetworkAccess` wird auf `Disabled` gesetzt
+
+Verifizieren:
+```bash
+# Private Endpoint pruefen
+az network private-endpoint list \
+  --resource-group rg-kvmi-dev \
+  --output table
+
+# Key Vault Public Access pruefen (sollte Disabled sein)
+az keyvault show --name kv-kvmi-dev \
+  --query properties.publicNetworkAccess
+
+# DNS Zone pruefen
+az network private-dns zone list \
+  --resource-group rg-kvmi-dev \
+  --output table
+```
+
+**Achtung**: Nach Aktivierung von `deployNetworking` ist der Key Vault nicht mehr vom lokalen Rechner aus erreichbar (403 Forbidden). Zugriff nur noch ueber Ressourcen im VNet.
+
+### Schritt 6: Azure Functions aktivieren (Phase 5)
+
+In `infra/environments/dev.bicepparam` hinzufuegen:
 ```bicep
 param deployFunctions = true
 ```
@@ -113,7 +150,7 @@ Dann erneut deployen:
 ```
 
 Neue Ressourcen:
-- `stkvmidev` -- Storage Account (Standard_LRS, für Functions-Runtime)
+- `stkvmidev` -- Storage Account (Standard_LRS, fuer Functions-Runtime)
 - `plan-func-kvmi-dev` -- Consumption Plan (Y1, serverless)
 - `func-kvmi-dev` -- Function App (Python 3.12)
 - Managed Identity + RBAC werden mitgenutzt (Identity-Sharing mit Web App)
@@ -137,11 +174,11 @@ curl https://func-kvmi-dev.azurewebsites.net/api/secret/test-secret
 ```
 
 Was passiert:
-- Fragt nach Bestaetigung (`yes` eingeben)
-- Loescht Resource Group `rg-kvmi-dev` und alle Ressourcen darin
+- Fragt nach Bestätigung (`yes` eingeben)
+- Löscht Resource Group `rg-kvmi-dev` und alle Ressourcen darin
 - Purgt den soft-deleted Key Vault (damit der Name wiederverwendbar ist)
 
-**Achtung**: Key Vault Purge Protection verzoegert das endgueltige Loeschen. Wenn du den gleichen Vault-Namen sofort wieder brauchst, muss der Purge-Befehl erfolgreich durchlaufen.
+**Achtung**: Key Vault Purge Protection verzögert das endgültige Löschen. Wenn du den gleichen Vault-Namen sofort wieder brauchst, muss der Purge-Befehl erfolgreich durchlaufen.
 
 ## Skript-Referenz
 
@@ -149,11 +186,11 @@ Was passiert:
 |--------|-------|-------------------|
 | `scripts/validate.sh [env]` | What-if Preview | Ja |
 | `scripts/deploy.sh [env]` | Deployment | Ja |
-| `scripts/teardown.sh [env]` | Aufraeumen | Ja |
+| `scripts/teardown.sh [env]` | Aufräumen | Ja |
 
 Alle Skripte akzeptieren `dev`, `staging` oder `prod` als Argument. Default: `dev`.
 
-## Bicep Lint lokal ausfuehren
+## Bicep Lint lokal ausführen
 
 ```bash
 az bicep lint --file infra/main.bicep

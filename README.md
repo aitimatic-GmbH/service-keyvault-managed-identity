@@ -2,17 +2,17 @@
 
 [![Bicep Lint](https://img.shields.io/badge/Bicep-Linted-blue)](#) [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> **"Sicherheit, die funktioniert: Ihre Geheimnisse sind sicher und nur fuer Ihre Anwendungen zugaenglich."**
+> **"Sicherheit, die funktioniert: Ihre Geheimnisse sind sicher und nur für Ihre Anwendungen zugänglich."**
 
 ## Was ist das?
 
-Dieses Repository stellt eine produktionsreife Azure Key Vault Infrastruktur mit Managed Identity Integration bereit -- vollstaendig als Infrastructure as Code (Bicep). Es demonstriert, wie Azure-Services sich ohne Passwoerter am Key Vault authentifizieren koennen.
+Dieses Repository stellt eine produktionsreife Azure Key Vault Infrastruktur mit Managed Identity Integration bereit -- vollständig als Infrastructure as Code (Bicep). Es demonstriert, wie Azure-Services sich ohne Passwörter am Key Vault authentifizieren können.
 
 ## Warum Key Vault + Managed Identity?
 
-**Das Problem**: Passwörter, Connection Strings und API-Keys landen in Konfigurationsdateien, Umgebungsvariablen oder sogar im Quellcode. Auditoren finden sie, Rotationen sind manuell und fehleranfaellig.
+**Das Problem**: Passwörter, Connection Strings und API-Keys landen in Konfigurationsdateien, Umgebungsvariablen oder sogar im Quellcode. Auditoren finden sie, Rotationen sind manuell und fehleranfällig.
 
-**Die Lösung**: Azure Key Vault speichert alle Secrets zentral und verschluesselt. Managed Identities ermoeglichen Anwendungen den Zugriff ohne jegliche Credentials im Code. Azure uebernimmt das Credential-Management vollstaendig.
+**Die Lösung**: Azure Key Vault speichert alle Secrets zentral und verschlüsselt. Managed Identities ermöglichen Anwendungen den Zugriff ohne jegliche Credentials im Code. Azure übernimmt das Credential-Management vollständig.
 
 ## Architektur
 
@@ -65,9 +65,9 @@ graph TB
 
 ## Voraussetzungen
 
-- Azure Subscription mit Berechtigungen fuer Key Vault und Identity-Erstellung
+- Azure Subscription mit Berechtigungen für Key Vault und Identity-Erstellung
 - [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) mit Bicep (`az bicep install`)
-- Oder: Dieses Repository im Dev Container oeffnen (alle Tools vorinstalliert)
+- Oder: Dieses Repository im Dev Container öffnen (alle Tools vorinstalliert)
 
 ## Quick Start
 
@@ -84,7 +84,7 @@ az login
 # 4. Test-Secret erstellen
 az keyvault secret set --vault-name kv-kvmi-dev --name test-secret --value "Hello from Key Vault!"
 
-# 5. Aufraeumen
+# 5. Aufräumen
 ./scripts/teardown.sh dev
 ```
 
@@ -124,7 +124,7 @@ docs/                       Detaillierte Dokumentation
 | 1 | Projekt-Foundation (Struktur, Linter, README) | done |
 | 2 | Core Key Vault Modul + RBAC + Deploy-Skripte | done |
 | 3 | Managed Identity + Web App | done |
-| 4 | Network Security (Private Endpoint, DNS) | geplant |
+| 4 | Network Security (Private Endpoint, DNS) | done |
 | 5 | Azure Functions | done |
 | 6 | VM Integration | geplant |
 | 7 | Container Apps + AKS | geplant |
@@ -134,13 +134,13 @@ docs/                       Detaillierte Dokumentation
 
 ## Design-Entscheidungen
 
-| Entscheidung | Wahl | Begruendung |
+| Entscheidung | Wahl | Begründung |
 |-------------|------|-------------|
 | Autorisierung | RBAC (nicht Access Policies) | Granulares Scoping, Azure-weit konsistent, Microsoft-Empfehlung |
-| Identity-Typ | User-Assigned (primaer) | Wiederverwendbar, unabhaengiger Lifecycle, vorab provisionierbar |
+| Identity-Typ | User-Assigned (primär) | Wiederverwendbar, unabhängiger Lifecycle, vorab provisionierbar |
 | Parameter-Format | `.bicepparam` | Native Bicep-Format, Compile-Time-Validierung |
-| Region | `germanywestcentral` | DSGVO-konform (Frankfurt), geringe Latenz fuer DE |
-| Key Vault SKU | Standard | Kein HSM noetig, Premium waere 4x teurer |
+| Region | `germanywestcentral` | DSGVO-konform (Frankfurt), geringe Latenz für DE |
+| Key Vault SKU | Standard | Kein HSM nötig, Premium wäre 4x teurer |
 
 ## Dokumentation
 
@@ -153,7 +153,7 @@ docs/                       Detaillierte Dokumentation
 
 ## Sicherheit
 
-Sicherheitsprobleme bitte ueber [SECURITY.md](SECURITY.md) melden.
+Sicherheitsprobleme bitte über [SECURITY.md](SECURITY.md) melden.
 
 ## Lizenz
 

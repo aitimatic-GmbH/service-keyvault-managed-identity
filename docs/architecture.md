@@ -1,6 +1,6 @@
 # Architektur: Key Vault + Managed Identity
 
-## Ueberblick
+## Überblick
 
 Das System besteht aus drei Kernkomponenten:
 
@@ -43,7 +43,7 @@ sequenceDiagram
     App->>MI: DefaultAzureCredential()<br/>AZURE_CLIENT_ID
     MI-->>App: Access Token (JWT)
     App->>KV: GET /secrets/my-secret<br/>Authorization: Bearer {token}
-    KV->>KV: RBAC pruefen:<br/>Hat principalId die Rolle<br/>"Key Vault Secrets User"?
+    KV->>KV: RBAC prüfen:<br/>Hat principalId die Rolle<br/>"Key Vault Secrets User"?
     KV-->>App: Secret Value
 ```
 
@@ -80,7 +80,7 @@ graph LR
 
 Pattern: `{abbreviation}-{project}-{environment}`
 
-| Ressource | Abkuerzung | Beispiel Dev | Beispiel Prod |
+| Ressource | Abkürzung | Beispiel Dev | Beispiel Prod |
 |-----------|-----------|-------------|--------------|
 | Resource Group | `rg` | `rg-kvmi-dev` | `rg-kvmi-prod` |
 | Key Vault | `kv` | `kv-kvmi-dev` | `kv-kvmi-prod` |
@@ -111,10 +111,10 @@ Quelle: [Azure Naming Conventions](https://learn.microsoft.com/azure/cloud-adopt
 | Feature | Einstellung | Warum |
 |---------|------------|-------|
 | RBAC Authorization | `true` | Granulare Zugriffskontrolle |
-| Soft-Delete | `true` (90 Tage) | Schutz vor versehentlichem Loeschen |
-| Purge Protection | `true` | Verhindert endgueltiges Loeschen waehrend Retention |
+| Soft-Delete | `true` (90 Tage) | Schutz vor versehentlichem Löschen |
+| Purge Protection | `true` | Verhindert endgültiges Löschen während Retention |
 | Network ACLs Default | `Deny` | Kein Zugriff ohne explizite Regel |
-| Network ACLs Bypass | `AzureServices` | Azure-interne Dienste koennen zugreifen |
+| Network ACLs Bypass | `AzureServices` | Azure-interne Dienste können zugreifen |
 | Public Network Access | `Enabled` (Phase 2-3), `Disabled` (Phase 4+) | Wird mit Private Endpoint abgeschaltet |
 
 ### Principle of Least Privilege
@@ -124,17 +124,17 @@ Jede Identity bekommt nur die minimale Berechtigung:
 | Identity | Rolle | GUID | Erlaubt |
 |----------|-------|------|---------|
 | Web App Identity | Key Vault Secrets User | `4633458b-...` | Nur Secret-Werte lesen |
-| (Nicht vergeben) | Key Vault Secrets Officer | `b86a8fe4-...` | Secrets erstellen/aendern/loeschen |
+| (Nicht vergeben) | Key Vault Secrets Officer | `b86a8fe4-...` | Secrets erstellen/ändern/löschen |
 | (Nicht vergeben) | Key Vault Administrator | `00482a5a-...` | Volle Verwaltung |
 
 ## Feature Flags
 
-Deployments werden ueber Parameter gesteuert:
+Deployments werden über Parameter gesteuert:
 
 | Flag | Default | Aktiviert in |
 |------|---------|-------------|
 | `deployWebApp` | `false` | Phase 3 |
-| `deployNetworking` | `false` | Phase 4 (geplant) |
+| `deployNetworking` | `false` | Phase 4 |
 | `deployFunctions` | `false` | Phase 5 |
 | `deployVm` | `false` | Phase 6 (geplant) |
 
@@ -142,6 +142,38 @@ In `dev.bicepparam`:
 ```bicep
 param deployWebApp = true  // Phase 3 aktivieren
 ```
+
+## Netzwerk-Topologie (Phase 4)
+
+```mermaid
+graph TB
+    subgraph "VNet: vnet-kvmi-{env} (10.0.0.0/16)"
+        subgraph "snet-private-endpoints (10.0.1.0/24)"
+            PE["Private Endpoint<br/>pep-kv-kvmi-{env}<br/>Private IP: 10.0.1.x"]
+        end
+        subgraph "snet-webapp (10.0.2.0/24)"
+            WEB_VNET["Web App<br/>VNet Integration"]
+        end
+        subgraph "snet-functions (10.0.3.0/24)"
+            FUNC_VNET["Functions<br/>(Phase 5)"]
+        end
+        subgraph "snet-vms (10.0.4.0/24)"
+            VM_VNET["VM<br/>(Phase 6)"]
+        end
+    end
+
+    DNS["Private DNS Zone<br/>privatelink.vaultcore.azure.net"]
+    KV["Key Vault<br/>publicNetworkAccess: Disabled"]
+
+    PE -->|"Private Link"| KV
+    DNS -->|"A Record -> Private IP"| PE
+    WEB_VNET -->|"DNS Resolve"| DNS
+```
+
+Wenn `deployNetworking = true`:
+- Key Vault `publicNetworkAccess` wird auf `Disabled` gesetzt
+- Traffic läuft nur noch über den Private Endpoint im VNet
+- DNS-Auflösung via Private DNS Zone: `kv-kvmi-dev.vault.azure.net` -> Private IP
 
 ## Environments
 
