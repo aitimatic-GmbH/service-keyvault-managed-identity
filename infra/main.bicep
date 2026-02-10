@@ -28,6 +28,9 @@ param tags object = {}
 @description('Deploy Web App with Managed Identity (Phase 3).')
 param deployWebApp bool = false
 
+@description('Deploy networking: VNet, Private Endpoint, DNS (Phase 4).')
+param deployNetworking bool = false
+
 // ---------------------------------------------------------------------------
 // Naming Convention
 // ---------------------------------------------------------------------------
@@ -39,6 +42,8 @@ var keyVaultName = 'kv-${nameSuffix}'
 var identityName = 'id-${nameSuffix}'
 var appServicePlanName = 'asp-${nameSuffix}'
 var webAppName = 'app-${nameSuffix}'
+var vnetName = 'vnet-${nameSuffix}'
+var kvPrivateEndpointName = 'pep-kv-${nameSuffix}'
 
 // ---------------------------------------------------------------------------
 // Phase 2: Key Vault
@@ -50,6 +55,7 @@ module keyVault 'modules/keyvault/main.bicep' = {
     name: keyVaultName
     location: location
     tags: tags
+    publicNetworkAccess: deployNetworking ? 'Disabled' : 'Enabled'
   }
 }
 
@@ -87,6 +93,47 @@ module webApp 'modules/webapp/main.bicep' = if (deployWebApp) {
     userAssignedIdentityId: identity.outputs.id
     userAssignedIdentityClientId: identity.outputs.clientId
     keyVaultUri: keyVault.outputs.uri
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 4: Networking (VNet, Private Endpoint, DNS)
+// ---------------------------------------------------------------------------
+
+module vnet 'modules/networking/vnet.bicep' = if (deployNetworking) {
+  name: 'deploy-vnet'
+  params: {
+    name: vnetName
+    location: location
+    tags: tags
+    subnets: [
+      { name: 'snet-private-endpoints', addressPrefix: '10.0.1.0/24' }
+      { name: 'snet-webapp', addressPrefix: '10.0.2.0/24', delegation: 'Microsoft.Web/serverFarms' }
+      { name: 'snet-functions', addressPrefix: '10.0.3.0/24', delegation: 'Microsoft.Web/serverFarms' }
+      { name: 'snet-vms', addressPrefix: '10.0.4.0/24' }
+    ]
+  }
+}
+
+module kvDnsZone 'modules/networking/private-dns-zone.bicep' = if (deployNetworking) {
+  name: 'deploy-kv-dns-zone'
+  params: {
+    name: 'privatelink.vaultcore.azure.net'
+    tags: tags
+    vnetId: vnet.outputs.id
+  }
+}
+
+module kvPrivateEndpoint 'modules/networking/private-endpoint.bicep' = if (deployNetworking) {
+  name: 'deploy-kv-private-endpoint'
+  params: {
+    name: kvPrivateEndpointName
+    location: location
+    tags: tags
+    subnetId: vnet.outputs.subnetIds['snet-private-endpoints']
+    privateLinkServiceId: keyVault.outputs.id
+    groupIds: ['vault']
+    privateDnsZoneId: kvDnsZone.outputs.id
   }
 }
 
