@@ -100,6 +100,36 @@ curl https://app-kvmi-dev.azurewebsites.net/
 curl https://app-kvmi-dev.azurewebsites.net/secret/test-secret
 ```
 
+### Schritt 5: Azure Functions aktivieren (Phase 5)
+
+In `infra/environments/dev.bicepparam` hinzufügen:
+```bicep
+param deployFunctions = true
+```
+
+Dann erneut deployen:
+```bash
+./scripts/deploy.sh dev
+```
+
+Neue Ressourcen:
+- `stkvmidev` -- Storage Account (Standard_LRS, für Functions-Runtime)
+- `plan-func-kvmi-dev` -- Consumption Plan (Y1, serverless)
+- `func-kvmi-dev` -- Function App (Python 3.12)
+- Managed Identity + RBAC werden mitgenutzt (Identity-Sharing mit Web App)
+
+Testen:
+```bash
+# Function App URL
+az functionapp show --name func-kvmi-dev --resource-group rg-kvmi-dev --query defaultHostName -o tsv
+
+# Health Check
+curl https://func-kvmi-dev.azurewebsites.net/api/health
+
+# Secret abrufen (Wert wird nicht angezeigt)
+curl https://func-kvmi-dev.azurewebsites.net/api/secret/test-secret
+```
+
 ## Aufraeumen
 
 ```bash
