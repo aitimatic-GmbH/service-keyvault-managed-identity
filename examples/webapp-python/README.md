@@ -1,6 +1,6 @@
 # Example: Python Web App with Key Vault Integration
 
-Flask-App die Secrets aus Azure Key Vault ueber Managed Identity liest.
+Flask-App die Secrets aus Azure Key Vault über Managed Identity liest.
 
 ## Lokal testen
 
@@ -19,6 +19,6 @@ python app.py
 
 ## Auf App Service
 
-Die App wird automatisch konfiguriert ueber die Bicep-Module:
+Die App wird automatisch konfiguriert über die Bicep-Module:
 - `AZURE_CLIENT_ID` -- Client ID der Managed Identity
 - `KEY_VAULT_URI` -- Vault URI
