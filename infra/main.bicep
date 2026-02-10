@@ -28,6 +28,9 @@ param tags object = {}
 @description('Deploy Web App with Managed Identity (Phase 3).')
 param deployWebApp bool = false
 
+@description('Deploy Azure Functions with Managed Identity (Phase 5).')
+param deployFunctions bool = false
+
 // ---------------------------------------------------------------------------
 // Naming Convention
 // ---------------------------------------------------------------------------
@@ -39,6 +42,9 @@ var keyVaultName = 'kv-${nameSuffix}'
 var identityName = 'id-${nameSuffix}'
 var appServicePlanName = 'asp-${nameSuffix}'
 var webAppName = 'app-${nameSuffix}'
+var storageAccountName = 'st${projectName}${environmentName}'
+var functionPlanName = 'plan-func-${nameSuffix}'
+var functionAppName = 'func-${nameSuffix}'
 
 // ---------------------------------------------------------------------------
 // Phase 2: Key Vault
@@ -57,7 +63,7 @@ module keyVault 'modules/keyvault/main.bicep' = {
 // Phase 3: Managed Identity + RBAC + Web App
 // ---------------------------------------------------------------------------
 
-module identity 'modules/identity/user-assigned.bicep' = if (deployWebApp) {
+module identity 'modules/identity/user-assigned.bicep' = if (deployWebApp || deployFunctions) {
   name: 'deploy-identity'
   params: {
     name: identityName
@@ -67,8 +73,8 @@ module identity 'modules/identity/user-assigned.bicep' = if (deployWebApp) {
 }
 
 // Key Vault Secrets User role for the Managed Identity
-module kvRbacWebApp 'modules/rbac/keyvault-role.bicep' = if (deployWebApp) {
-  name: 'deploy-kv-rbac-webapp'
+module kvRbac 'modules/rbac/keyvault-role.bicep' = if (deployWebApp || deployFunctions) {
+  name: 'deploy-kv-rbac-identity'
   params: {
     keyVaultName: keyVault.outputs.name
     principalId: identity.outputs.principalId
@@ -91,6 +97,24 @@ module webApp 'modules/webapp/main.bicep' = if (deployWebApp) {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 5: Azure Functions
+// ---------------------------------------------------------------------------
+
+module functions 'modules/functions/main.bicep' = if (deployFunctions) {
+  name: 'deploy-functions'
+  params: {
+    storageAccountName: storageAccountName
+    functionPlanName: functionPlanName
+    functionAppName: functionAppName
+    location: location
+    tags: tags
+    userAssignedIdentityId: identity.outputs.id
+    userAssignedIdentityClientId: identity.outputs.clientId
+    keyVaultUri: keyVault.outputs.uri
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------
 
@@ -102,3 +126,6 @@ output keyVaultUri string = keyVault.outputs.uri
 
 @description('Default hostname of the Web App.')
 output webAppHostName string = deployWebApp ? webApp.outputs.defaultHostName : ''
+
+@description('Default hostname of the Function App.')
+output functionAppHostName string = deployFunctions ? functions.outputs.defaultHostName : ''
