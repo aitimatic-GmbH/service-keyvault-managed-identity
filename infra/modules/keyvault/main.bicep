@@ -31,8 +31,8 @@ param enableSoftDelete bool = true
 @maxValue(90)
 param softDeleteRetentionInDays int = 90
 
-@description('Enable purge protection. One-way switch -- cannot be disabled once enabled.')
-param enablePurgeProtection bool = true
+@description('Enable purge protection. One-way switch -- cannot be disabled once enabled. Recommended: true for prod, false for dev/staging.')
+param enablePurgeProtection bool = false
 
 @description('Public network access: Enabled or Disabled. Set to Disabled when using Private Endpoints.')
 @allowed(['Enabled', 'Disabled'])

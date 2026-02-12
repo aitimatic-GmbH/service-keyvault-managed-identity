@@ -34,6 +34,10 @@ param deployNetworking bool = false
 @description('Deploy Azure Functions with Managed Identity (Phase 5).')
 param deployFunctions bool = false
 
+@description('App Service Plan SKU for Web App. F1=Free, B1=Basic, S1=Standard.')
+@allowed(['F1', 'B1', 'S1'])
+param webAppSkuName string = 'F1'
+
 // ---------------------------------------------------------------------------
 // Naming Convention
 // ---------------------------------------------------------------------------
@@ -62,6 +66,7 @@ module keyVault 'modules/keyvault/main.bicep' = {
     location: location
     tags: tags
     publicNetworkAccess: deployNetworking ? 'Disabled' : 'Enabled'
+    enablePurgeProtection: environmentName == 'prod'
   }
 }
 
@@ -83,7 +88,7 @@ module kvRbac 'modules/rbac/keyvault-role.bicep' = if (deployWebApp || deployFun
   name: 'deploy-kv-rbac-identity'
   params: {
     keyVaultName: keyVault.outputs.name
-    principalId: identity.outputs.principalId
+    principalId: identity!.outputs.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: '4633458b-17de-408a-b874-0445c86b69e6'
   }
@@ -96,8 +101,9 @@ module webApp 'modules/webapp/main.bicep' = if (deployWebApp) {
     webAppName: webAppName
     location: location
     tags: tags
-    userAssignedIdentityId: identity.outputs.id
-    userAssignedIdentityClientId: identity.outputs.clientId
+    skuName: webAppSkuName
+    userAssignedIdentityId: identity!.outputs.id
+    userAssignedIdentityClientId: identity!.outputs.clientId
     keyVaultUri: keyVault.outputs.uri
   }
 }
@@ -126,7 +132,7 @@ module kvDnsZone 'modules/networking/private-dns-zone.bicep' = if (deployNetwork
   params: {
     name: 'privatelink.vaultcore.azure.net'
     tags: tags
-    vnetId: vnet.outputs.id
+    vnetId: vnet!.outputs.id
   }
 }
 
@@ -136,10 +142,10 @@ module kvPrivateEndpoint 'modules/networking/private-endpoint.bicep' = if (deplo
     name: kvPrivateEndpointName
     location: location
     tags: tags
-    subnetId: vnet.outputs.subnetIds['snet-private-endpoints']
+    subnetId: vnet!.outputs.subnetIds['snet-private-endpoints']
     privateLinkServiceId: keyVault.outputs.id
     groupIds: ['vault']
-    privateDnsZoneId: kvDnsZone.outputs.id
+    privateDnsZoneId: kvDnsZone!.outputs.id
   }
 }
 
@@ -155,8 +161,8 @@ module functions 'modules/functions/main.bicep' = if (deployFunctions) {
     functionAppName: functionAppName
     location: location
     tags: tags
-    userAssignedIdentityId: identity.outputs.id
-    userAssignedIdentityClientId: identity.outputs.clientId
+    userAssignedIdentityId: identity!.outputs.id
+    userAssignedIdentityClientId: identity!.outputs.clientId
     keyVaultUri: keyVault.outputs.uri
   }
 }
@@ -172,7 +178,7 @@ output keyVaultName string = keyVault.outputs.name
 output keyVaultUri string = keyVault.outputs.uri
 
 @description('Default hostname of the Web App.')
-output webAppHostName string = deployWebApp ? webApp.outputs.defaultHostName : ''
+output webAppHostName string = deployWebApp ? webApp!.outputs.defaultHostName : ''
 
 @description('Default hostname of the Function App.')
-output functionAppHostName string = deployFunctions ? functions.outputs.defaultHostName : ''
+output functionAppHostName string = deployFunctions ? functions!.outputs.defaultHostName : ''
