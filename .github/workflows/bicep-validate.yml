@@ -10,7 +10,6 @@ name: "Bicep -- Validierung"
 
 on:
   push:
-    branches: [main]
     paths:
       - "infra/**"
       - ".github/actions/validate/**"
