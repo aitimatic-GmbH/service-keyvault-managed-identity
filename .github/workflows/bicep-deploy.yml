@@ -1,17 +1,114 @@
-name: deploy bicep files
+# ---------------------------------------------------------------------------
+# CD: Bicep Deploy (What-If + Deploy)
+# ---------------------------------------------------------------------------
+# Manueller Trigger via workflow_dispatch oder wiederverwendbar via workflow_call.
+# Verwendet Composite Actions aus .github/actions/ -- dieselben Actions kann
+# ein Parent-Repo nutzen, wenn dieses Repo als Git-Submodul eingebunden ist.
+# ---------------------------------------------------------------------------
+
+name: "Bicep -- Deploy"
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Zielumgebung"
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      skip-what-if:
+        description: "What-If Vorschau überspringen"
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      environment:
+        description: "Zielumgebung (dev, staging, prod)"
+        required: true
+        type: string
+      working-directory:
+        description: "Pfad-Offset wenn als Git-Submodul verwendet"
+        required: false
+        type: string
+        default: "."
+      skip-what-if:
+        description: "What-If Vorschau überspringen"
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      AZURE_CLIENT_ID:
+        required: true
+      AZURE_TENANT_ID:
+        required: true
+      AZURE_SUBSCRIPTION_ID:
+        required: true
 
 jobs:
-  hello:
+  # ---------------------------------------------------------------------------
+  # Job 1: What-If Vorschau
+  # ---------------------------------------------------------------------------
+  what-if:
+    name: "What-If (${{ inputs.environment }})"
     runs-on: ubuntu-latest
+    if: inputs.skip-what-if != true
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Say Hello
-        run: echo "service-keyvault-managed-identity 🚀"
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-If preview
+        uses: ./.github/actions/deploy
+        with:
+          working-directory: ${{ inputs.working-directory || '.' }}
+          environment: ${{ inputs.environment }}
+          mode: what-if
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Deploy (mit Environment Gate für Approval)
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: "Deploy (${{ inputs.environment }})"
+    runs-on: ubuntu-latest
+    needs: what-if
+    if: >-
+      always()
+      && (needs.what-if.result == 'success' || needs.what-if.result == 'skipped')
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to ${{ inputs.environment }}
+        uses: ./.github/actions/deploy
+        with:
+          working-directory: ${{ inputs.working-directory || '.' }}
+          environment: ${{ inputs.environment }}
+          mode: deploy
