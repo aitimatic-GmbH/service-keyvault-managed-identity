@@ -76,5 +76,6 @@ runs:
       run: |
         az deployment group list \
           --resource-group "rg-kvmi-${{ inputs.environment }}" \
-          --top 1 \
+          --query "sort_by(@, &properties.timestamp)[-1]" \
           --output table
+
