@@ -1,0 +1,23 @@
+{
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "rules": {
+        "no-hardcoded-env-urls": { "level": "error" },
+        "no-hardcoded-location": { "level": "warning" },
+        "use-secure-value-for-secure-inputs": { "level": "error" },
+        "no-unused-params": { "level": "warning" }
+      }
+    }
+  },
+  "experimentalFeaturesEnabled": {
+    "sourceMapping": true,
+    "symbolicNameCodegen": true
+  },
+  "formatting": {
+    "indentKind": "Space",
+    "indentSize": 2,
+    "insertFinalNewline": true,
+    "newlineKind": "LF"
+  }
+}

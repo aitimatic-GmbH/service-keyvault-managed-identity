@@ -119,18 +119,18 @@ docs/                       Detaillierte Dokumentation
 
 ## Implementierungs-Phasen
 
-| Phase | Inhalt | Kosten (Dev) |
-|-------|--------|-------------|
-| 1 | Projekt-Foundation (Struktur, Linter, README) | 0 EUR |
-| 2 | Core Key Vault Modul + RBAC + Deploy-Skripte | ~0 EUR |
-| 3 | Managed Identity + Web App (F1 Free Tier) | ~0 EUR |
-| 4 | Network Security (Private Endpoint, DNS) | ~8 EUR/Monat |
-| 5 | Azure Functions (Consumption Plan) | ~0 EUR |
-| 6 | VM Integration (Standard_B1s) | ~7 EUR/Monat |
-| 7 | Container Apps + AKS | ~30 EUR/Monat |
-| 8 | Monitoring + Secret Rotation | ~0 EUR (5 GB frei) |
-| 9 | CI/CD (GitHub Actions, Submodule-faehig) | 0 EUR |
-| 10 | Dokumentation | 0 EUR |
+| Phase | Inhalt |
+|-------|--------|
+| 1 | Projekt-Foundation (Struktur, Linter, README) |
+| 2 | Core Key Vault Modul + RBAC + Deploy-Skripte |
+| 3 | Managed Identity + Web App |
+| 4 | Network Security (Private Endpoint, DNS) |
+| 5 | Azure Functions |
+| 6 | VM Integration |
+| 7 | Container Apps + AKS |
+| 8 | Monitoring + Secret Rotation |
+| 9 | CI/CD (GitHub Actions, Submodule-faehig) |
+| 10 | Dokumentation |
 
 ## Design-Entscheidungen
 
