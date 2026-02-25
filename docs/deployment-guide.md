@@ -4,8 +4,8 @@
 
 1. **Azure CLI** mit Bicep installiert
    ```bash
-   az --version        # Mindestens 2.61+
-   az bicep version    # Mindestens 0.25+
+   az --version        # Version 2.83.0
+   az bicep version    # Version 0.40.2
    ```
 
 2. **Azure Subscription** mit Berechtigungen:
