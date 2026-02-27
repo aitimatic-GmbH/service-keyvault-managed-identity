@@ -25,6 +25,9 @@ param projectName string = 'kvmi'
 @description('Tags applied to all resources.')
 param tags object = {}
 
+@description('Deploy Web App with Managed Identity (Phase 3).')
+param deployWebApp bool = false
+
 // ---------------------------------------------------------------------------
 // Naming Convention
 // ---------------------------------------------------------------------------
@@ -33,6 +36,9 @@ param tags object = {}
 
 var nameSuffix = '${projectName}-${environmentName}'
 var keyVaultName = 'kv-${nameSuffix}'
+var identityName = 'id-${nameSuffix}'
+var appServicePlanName = 'asp-${nameSuffix}'
+var webAppName = 'app-${nameSuffix}'
 
 // ---------------------------------------------------------------------------
 // Phase 2: Key Vault
@@ -48,6 +54,43 @@ module keyVault 'modules/keyvault/main.bicep' = {
 }
 
 // ---------------------------------------------------------------------------
+// Phase 3: Managed Identity + RBAC + Web App
+// ---------------------------------------------------------------------------
+
+module identity 'modules/identity/user-assigned.bicep' = if (deployWebApp) {
+  name: 'deploy-identity'
+  params: {
+    name: identityName
+    location: location
+    tags: tags
+  }
+}
+
+// Key Vault Secrets User role for the Managed Identity
+module kvRbacWebApp 'modules/rbac/keyvault-role.bicep' = if (deployWebApp) {
+  name: 'deploy-kv-rbac-webapp'
+  params: {
+    keyVaultName: keyVault.outputs.name
+    principalId: identity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: '4633458b-17de-408a-b874-0445c86b69e6'
+  }
+}
+
+module webApp 'modules/webapp/main.bicep' = if (deployWebApp) {
+  name: 'deploy-webapp'
+  params: {
+    appServicePlanName: appServicePlanName
+    webAppName: webAppName
+    location: location
+    tags: tags
+    userAssignedIdentityId: identity.outputs.id
+    userAssignedIdentityClientId: identity.outputs.clientId
+    keyVaultUri: keyVault.outputs.uri
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Outputs
 // ---------------------------------------------------------------------------
 
@@ -56,3 +99,6 @@ output keyVaultName string = keyVault.outputs.name
 
 @description('URI of the deployed Key Vault.')
 output keyVaultUri string = keyVault.outputs.uri
+
+@description('Default hostname of the Web App.')
+output webAppHostName string = deployWebApp ? webApp.outputs.defaultHostName : ''
