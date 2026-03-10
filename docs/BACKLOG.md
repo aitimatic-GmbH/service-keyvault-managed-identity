@@ -5,7 +5,7 @@
 - **done** -- Abgeschlossen und gemerged
 - **in-progress** -- Aktuell in Bearbeitung (eigener Branch)
 - **planned** -- Geplant, noch nicht begonnen
-- **future** -- Spaetere Erweiterung, kein fester Termin
+- **future** -- Spätere Erweiterung, kein fester Termin
 
 ---
 
@@ -18,8 +18,8 @@
 |---------|--------|
 | `infra/bicepconfig.json` -- Bicep Linter + Formatting | done |
 | `.github/CODEOWNERS` -- Repository Ownership | done |
-| `.gitignore` -- Bicep/Azure Eintraege | done |
-| `README.md` -- Service-Uebersicht, Architektur-Diagramm | done |
+| `.gitignore` -- Bicep/Azure Einträge | done |
+| `README.md` -- Service-Übersicht, Architektur-Diagramm | done |
 
 ---
 
@@ -42,7 +42,7 @@
 
 ## Phase 3: Managed Identity + Web App
 
-**Status**: in-progress
+**Status**: done
 **Branch**: `feat/managed-identity-webapp`
 
 | Aufgabe | Status |
@@ -51,24 +51,26 @@
 | `infra/modules/webapp/main.bicep` -- App Service Plan (F1) + Web App + Identity Binding | done |
 | `infra/main.bicep` -- Feature-Flag `deployWebApp`, Identity + RBAC + Web App Module | done |
 | `examples/webapp-python/` -- Flask Beispiel-App | done |
-| `docs/` -- Technische Dokumentation | in-progress |
-| Azure-Test: Deploy + Secret erstellen + abrufen | planned |
+| `docs/` -- Technische Dokumentation | done |
+| Azure-Test: Deploy + Secret erstellen + abrufen | done |
 
 ---
 
 ## Phase 4: Network Security (Private Endpoints)
 
-**Status**: planned
+**Status**: in-progress
+**Branch**: `feat/network-security`
 
 | Aufgabe | Status |
 |---------|--------|
-| `infra/modules/networking/vnet.bicep` -- VNet + Subnets | planned |
-| `infra/modules/networking/private-endpoint.bicep` -- Private Endpoint + DNS Zone Group | planned |
-| `infra/modules/networking/private-dns-zone.bicep` -- Private DNS Zone + VNet-Link | planned |
-| `infra/main.bicep` -- Feature-Flag `deployNetworking` | planned |
-| `infra/environments/staging.bicepparam` -- Staging-Parameter | planned |
-| `infra/environments/prod.bicepparam` -- Prod-Parameter | planned |
-| Key Vault `publicNetworkAccess: Disabled` | planned |
+| `infra/modules/networking/vnet.bicep` -- VNet + Subnets (typed, mit Delegations) | done |
+| `infra/modules/networking/private-endpoint.bicep` -- Private Endpoint + DNS Zone Group | done |
+| `infra/modules/networking/private-dns-zone.bicep` -- Private DNS Zone + VNet-Link | done |
+| `infra/main.bicep` -- Feature-Flag `deployNetworking`, KV publicNetworkAccess toggle | done |
+| `infra/environments/staging.bicepparam` -- Staging-Parameter | done |
+| `infra/environments/prod.bicepparam` -- Prod-Parameter | done |
+| Key Vault `publicNetworkAccess: Disabled` (auto bei deployNetworking=true) | done |
+| Azure-Test: Validate + Private Endpoint prüfen | planned |
 
 ---
 
@@ -94,7 +96,7 @@
 | `infra/modules/vm/main.bicep` -- NIC + VM (B1s) mit System-Assigned Identity | planned |
 | `infra/main.bicep` -- Feature-Flag `deployVm` | planned |
 | SSH-Key Auth (kein Passwort) | planned |
-| RBAC fuer VM System-Assigned Identity | planned |
+| RBAC für VM System-Assigned Identity | planned |
 
 ---
 
@@ -119,11 +121,11 @@
 | `infra/modules/monitoring/log-analytics.bicep` -- Log Analytics (PerGB2018) | future |
 | `infra/modules/monitoring/diagnostic-settings.bicep` -- Diagnostic Settings | future |
 | `infra/modules/automation/secret-rotation.bicep` -- Automation + Event Grid | future |
-| AuditEvent-Logs fuer AZ-500 Compliance | future |
+| AuditEvent-Logs für AZ-500 Compliance | future |
 
 ---
 
-## Phase 9: CI/CD (Submodule-faehig)
+## Phase 9: CI/CD (Submodule-fähig)
 
 **Status**: future
 
@@ -145,7 +147,7 @@
 | Aufgabe | Status |
 |---------|--------|
 | `docs/architecture.md` -- Mermaid-Diagramme | future |
-| `docs/deployment-guide.md` -- Schritt-fuer-Schritt | future |
+| `docs/deployment-guide.md` -- Schritt-für-Schritt | future |
 | `docs/troubleshooting.md` -- Fehlerbehebung | future |
-| `docs/cost-estimation.md` -- Kostenaufschluesselung | future |
+| `docs/cost-estimation.md` -- Kostenaufschlüsselung | future |
 | `docs/glossary.md` -- Begriffe | future |
