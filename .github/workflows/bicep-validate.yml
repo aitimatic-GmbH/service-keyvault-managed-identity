@@ -1,17 +1,88 @@
-name: validate bicep files
+# ---------------------------------------------------------------------------
+# CI: Bicep Lint, Build & Validierung
+# ---------------------------------------------------------------------------
+# Läuft bei jedem PR und Push zu main (gefiltert auf infra/).
+# Verwendet Composite Actions aus .github/actions/ -- dieselben Actions kann
+# ein Parent-Repo nutzen, wenn dieses Repo als Git-Submodul eingebunden ist.
+# ---------------------------------------------------------------------------
+
+name: "Bicep -- Validierung"
 
 on:
   push:
-    branches:
-      - main
+    paths:
+      - "infra/**"
+      - ".github/actions/validate/**"
+      - ".github/workflows/bicep-validate.yml"
   pull_request:
+    paths:
+      - "infra/**"
+      - ".github/actions/validate/**"
+      - ".github/workflows/bicep-validate.yml"
+  workflow_call:
+    inputs:
+      working-directory:
+        description: "Pfad-Offset wenn als Git-Submodul verwendet"
+        required: false
+        type: string
+        default: "."
+    secrets:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
 
 jobs:
-  hello:
+  # ---------------------------------------------------------------------------
+  # Job 1: Lint & Build (keine Azure-Credentials nötig)
+  # ---------------------------------------------------------------------------
+  lint-and-build:
+    name: "Lint & Build"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Say Hello
-        run: echo "service-keyvault-managed-identity 🚀"
+      - name: Validate (lint + build)
+        uses: ./.github/actions/validate
+        with:
+          working-directory: ${{ inputs.working-directory || '.' }}
+          mode: lint
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Azure Deployment-Validierung (benötigt OIDC, Matrix)
+  # ---------------------------------------------------------------------------
+  validate:
+    name: "Validate (${{ matrix.environment }})"
+    runs-on: ubuntu-latest
+    needs: lint-and-build
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, staging, prod]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate against Azure (${{ matrix.environment }})
+        uses: ./.github/actions/validate
+        with:
+          working-directory: ${{ inputs.working-directory || '.' }}
+          mode: full
+          environment: ${{ matrix.environment }}

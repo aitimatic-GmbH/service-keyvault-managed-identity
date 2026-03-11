@@ -120,24 +120,54 @@ Neue Ressourcen:
 
 Verifizieren:
 ```bash
-# Private Endpoint prüfen
+# Private Endpoint pruefen
 az network private-endpoint list \
   --resource-group rg-kvmi-dev \
   --output table
 
-# Key Vault Public Access prüfen (sollte Disabled sein)
+# Key Vault Public Access pruefen (sollte Disabled sein)
 az keyvault show --name kv-kvmi-dev \
   --query properties.publicNetworkAccess
 
-# DNS Zone prüfen
+# DNS Zone pruefen
 az network private-dns zone list \
   --resource-group rg-kvmi-dev \
   --output table
 ```
 
-**Achtung**: Nach Aktivierung von `deployNetworking` ist der Key Vault nicht mehr vom lokalen Rechner aus erreichbar (403 Forbidden). Zugriff nur noch über Ressourcen im VNet.
+**Achtung**: Nach Aktivierung von `deployNetworking` ist der Key Vault nicht mehr vom lokalen Rechner aus erreichbar (403 Forbidden). Zugriff nur noch ueber Ressourcen im VNet.
 
-## Aufräumen
+### Schritt 6: Azure Functions aktivieren (Phase 5)
+
+In `infra/environments/dev.bicepparam` hinzufuegen:
+```bicep
+param deployFunctions = true
+```
+
+Dann erneut deployen:
+```bash
+./scripts/deploy.sh dev
+```
+
+Neue Ressourcen:
+- `stkvmidev` -- Storage Account (Standard_LRS, fuer Functions-Runtime)
+- `plan-func-kvmi-dev` -- Consumption Plan (Y1, serverless)
+- `func-kvmi-dev` -- Function App (Python 3.12)
+- Managed Identity + RBAC werden mitgenutzt (Identity-Sharing mit Web App)
+
+Testen:
+```bash
+# Function App URL
+az functionapp show --name func-kvmi-dev --resource-group rg-kvmi-dev --query defaultHostName -o tsv
+
+# Health Check
+curl https://func-kvmi-dev.azurewebsites.net/api/health
+
+# Secret abrufen (Wert wird nicht angezeigt)
+curl https://func-kvmi-dev.azurewebsites.net/api/secret/test-secret
+```
+
+## Aufraeumen
 
 ```bash
 ./scripts/teardown.sh dev

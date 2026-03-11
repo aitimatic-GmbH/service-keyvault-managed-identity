@@ -76,14 +76,17 @@
 
 ## Phase 5: Azure Functions
 
-**Status**: planned
+**Status**: in-progress
+**Branch**: `feat/azure-functions`
 
 | Aufgabe | Status |
 |---------|--------|
-| `infra/modules/functions/main.bicep` -- Storage + Function App (Y1 Consumption) | planned |
-| `infra/main.bicep` -- Feature-Flag `deployFunctions` | planned |
-| `examples/function-python/` -- HTTP-Trigger Beispiel | planned |
-| Key Vault References in App Settings | planned |
+| `infra/modules/functions/main.bicep` -- Storage + Function App (Y1 Consumption) | done |
+| `infra/main.bicep` -- Feature-Flag `deployFunctions`, Identity-Sharing | done |
+| `examples/function-python/` -- HTTP-Trigger Beispiel | done |
+| Key Vault References in App Settings (AZURE_CLIENT_ID, KEY_VAULT_URI) | done |
+| Identity-Bedingung erweitert: `deployWebApp \|\| deployFunctions` | done |
+| Azure-Test: Validate + Function testen | planned |
 
 ---
 
