@@ -59,6 +59,9 @@ graph LR
     RBAC_MOD["modules/rbac/keyvault-role.bicep"]
     ID_MOD["modules/identity/user-assigned.bicep"]
     WEB_MOD["modules/webapp/main.bicep"]
+    VNET_MOD["modules/networking/vnet.bicep"]
+    DNS_MOD["modules/networking/private-dns-zone.bicep"]
+    PE_MOD["modules/networking/private-endpoint.bicep"]
 
     FUNC_MOD["modules/functions/main.bicep"]
 
@@ -69,6 +72,8 @@ graph LR
     MAIN -->|"storageAccountName, identityId, keyVaultUri"| FUNC_MOD
 
     KV_MOD -->|"outputs.name"| RBAC_MOD
+    KV_MOD -->|"outputs.id"| PE_MOD
+    KV_MOD -->|"outputs.uri"| WEB_MOD
     ID_MOD -->|"outputs.principalId"| RBAC_MOD
     ID_MOD -->|"outputs.id, outputs.clientId"| WEB_MOD
     ID_MOD -->|"outputs.id, outputs.clientId"| FUNC_MOD
