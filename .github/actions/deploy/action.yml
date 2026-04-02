@@ -1,0 +1,81 @@
+# ---------------------------------------------------------------------------
+# Composite Action: Bicep Deploy (What-If + Deploy)
+# ---------------------------------------------------------------------------
+# Verwendung aus Parent-Repo (Submodul):
+#   - uses: ./submodules/service-keyvault-managed-identity/.github/actions/deploy
+#     with:
+#       working-directory: submodules/service-keyvault-managed-identity
+#       environment: dev
+#
+# Verwendung aus diesem Repo:
+#   - uses: ./.github/actions/deploy
+#     with:
+#       environment: dev
+# ---------------------------------------------------------------------------
+
+name: "Bicep Deploy"
+description: "Deployment von Bicep-Templates zu Azure (what-if Vorschau + Deployment)"
+
+inputs:
+  working-directory:
+    description: "Stammverzeichnis des Repositories (Standard: '.')"
+    required: false
+    default: "."
+  environment:
+    description: "Zielumgebung (dev, staging, prod)"
+    required: true
+  mode:
+    description: "Bereitstellungsmodus: 'what-if' (nur Vorschau) oder 'deploy' (tatsächliche Bereitstellung)"
+    required: false
+    default: "deploy"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve paths
+      id: dirs
+      shell: bash
+      run: |
+        BASE="${{ inputs.working-directory }}"
+        BASE="${BASE%/}"
+        echo "infra=${BASE}/infra" >> "$GITHUB_OUTPUT"
+
+    - name: Ensure resource group exists
+      shell: bash
+      run: |
+        az group create \
+          --name "rg-kvmi-${{ inputs.environment }}" \
+          --location "westeurope" \
+          --tags environment="${{ inputs.environment }}" project="keyvault-managed-identity" \
+          --output none
+
+    - name: What-If preview
+      shell: bash
+      run: |
+        INFRA="${{ steps.dirs.outputs.infra }}"
+        az deployment group what-if \
+          --resource-group "rg-kvmi-${{ inputs.environment }}" \
+          --template-file "${INFRA}/main.bicep" \
+          --parameters "${INFRA}/environments/${{ inputs.environment }}.bicepparam"
+
+    - name: Deploy
+      if: inputs.mode == 'deploy'
+      shell: bash
+      run: |
+        INFRA="${{ steps.dirs.outputs.infra }}"
+        az deployment group create \
+          --resource-group "rg-kvmi-${{ inputs.environment }}" \
+          --template-file "${INFRA}/main.bicep" \
+          --parameters "${INFRA}/environments/${{ inputs.environment }}.bicepparam" \
+          --name "gha-$(date +%Y%m%d-%H%M%S)" \
+          --verbose
+
+    - name: Show deployment result
+      if: inputs.mode == 'deploy'
+      shell: bash
+      run: |
+        az deployment group list \
+          --resource-group "rg-kvmi-${{ inputs.environment }}" \
+          --query "sort_by(@, &properties.timestamp)[-1]" \
+          --output table
+

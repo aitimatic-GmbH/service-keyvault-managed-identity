@@ -63,22 +63,22 @@ graph LR
     DNS_MOD["modules/networking/private-dns-zone.bicep"]
     PE_MOD["modules/networking/private-endpoint.bicep"]
 
+    FUNC_MOD["modules/functions/main.bicep"]
+
     MAIN -->|"name, location, tags"| KV_MOD
     MAIN -->|"name, location, tags"| ID_MOD
     MAIN -->|"keyVaultName, principalId, roleDefinitionId"| RBAC_MOD
     MAIN -->|"identityId, identityClientId, keyVaultUri"| WEB_MOD
-    MAIN -->|"name, location, tags, subnets"| VNET_MOD
-    MAIN -->|"name, tags, vnetId"| DNS_MOD
-    MAIN -->|"name, location, subnetId, privateLinkServiceId, privateDnsZoneId"| PE_MOD
+    MAIN -->|"storageAccountName, identityId, keyVaultUri"| FUNC_MOD
 
     KV_MOD -->|"outputs.name"| RBAC_MOD
     KV_MOD -->|"outputs.id"| PE_MOD
     KV_MOD -->|"outputs.uri"| WEB_MOD
     ID_MOD -->|"outputs.principalId"| RBAC_MOD
     ID_MOD -->|"outputs.id, outputs.clientId"| WEB_MOD
-    VNET_MOD -->|"outputs.id"| DNS_MOD
-    VNET_MOD -->|"outputs.subnetIds"| PE_MOD
-    DNS_MOD -->|"outputs.id"| PE_MOD
+    ID_MOD -->|"outputs.id, outputs.clientId"| FUNC_MOD
+    KV_MOD -->|"outputs.uri"| WEB_MOD
+    KV_MOD -->|"outputs.uri"| FUNC_MOD
 ```
 
 ## Naming Convention
@@ -94,6 +94,9 @@ Pattern: `{abbreviation}-{project}-{environment}`
 | Web App | `app` | `app-kvmi-dev` | `app-kvmi-prod` |
 | VNet | `vnet` | `vnet-kvmi-dev` | `vnet-kvmi-prod` |
 | Private Endpoint | `pep` | `pep-kv-kvmi-dev` | `pep-kv-kvmi-prod` |
+| Storage Account | `st` | `stkvmidev` | `stkvmiprod` |
+| Function Plan | `plan-func` | `plan-func-kvmi-dev` | `plan-func-kvmi-prod` |
+| Function App | `func` | `func-kvmi-dev` | `func-kvmi-prod` |
 
 Quelle: [Azure Naming Conventions](https://learn.microsoft.com/azure/cloud-adoption-framework/ready/azure-best-practices/resource-naming)
 
@@ -137,7 +140,7 @@ Deployments werden über Parameter gesteuert:
 |------|---------|-------------|
 | `deployWebApp` | `false` | Phase 3 |
 | `deployNetworking` | `false` | Phase 4 |
-| `deployFunctions` | `false` | Phase 5 (geplant) |
+| `deployFunctions` | `false` | Phase 5 |
 | `deployVm` | `false` | Phase 6 (geplant) |
 
 In `dev.bicepparam`:

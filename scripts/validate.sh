@@ -7,7 +7,7 @@ RESOURCE_GROUP="rg-kvmi-${ENVIRONMENT}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="${SCRIPT_DIR}/../infra"
 
-LOCATION="germanywestcentral"
+LOCATION="westeurope"
 
 echo "=== Validating environment: ${ENVIRONMENT} ==="
 

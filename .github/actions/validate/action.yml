@@ -1,0 +1,91 @@
+# ---------------------------------------------------------------------------
+# Composite Action: Bicep Validierung (Lint + Build + Azure Validate)
+# ---------------------------------------------------------------------------
+# Verwendung aus Parent-Repo (Submodul):
+#   - uses: ./submodules/service-keyvault-managed-identity/.github/actions/validate
+#     with:
+#       working-directory: submodules/service-keyvault-managed-identity
+#
+# Verwendung aus diesem Repo:
+#   - uses: ./.github/actions/validate
+# ---------------------------------------------------------------------------
+
+name: "Bicep Validate"
+description: "Lint, Build und optionale Validierung von Bicep-Templates gegen Azure"
+
+inputs:
+  working-directory:
+    description: "Stammverzeichnis des Repositories (Standard: '.')"
+    required: false
+    default: "."
+  mode:
+    description: "Validierungsmodus: 'lint' (nur lint+build) oder 'full' (lint+build+azure validate)"
+    required: false
+    default: "lint"
+  environment:
+    description: "Zielumgebung für Azure-Validierung (dev, staging, prod). Erforderlich wenn mode=full."
+    required: false
+    default: "dev"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve paths
+      id: dirs
+      shell: bash
+      run: |
+        BASE="${{ inputs.working-directory }}"
+        BASE="${BASE%/}"
+        echo "infra=${BASE}/infra" >> "$GITHUB_OUTPUT"
+
+    - name: Lint all Bicep files
+      shell: bash
+      run: |
+        INFRA="${{ steps.dirs.outputs.infra }}"
+        echo "::group::Bicep Lint"
+        fail=0
+        while IFS= read -r -d '' f; do
+          echo "--- ${f} ---"
+          if ! az bicep lint --file "$f" 2>&1; then
+            fail=1
+          fi
+        done < <(find "$INFRA" -name '*.bicep' -print0)
+        echo "::endgroup::"
+        exit "$fail"
+
+    - name: Build main template
+      shell: bash
+      run: |
+        az bicep build \
+          --file "${{ steps.dirs.outputs.infra }}/main.bicep" \
+          --stdout > /dev/null
+        echo "Build successful"
+
+    - name: Build parameter files
+      shell: bash
+      run: |
+        for f in "${{ steps.dirs.outputs.infra }}"/environments/*.bicepparam; do
+          echo "--- ${f} ---"
+          az bicep build-params --file "$f" --stdout > /dev/null
+        done
+        echo "All parameter files valid"
+
+    - name: Ensure resource group exists
+      if: inputs.mode == 'full'
+      shell: bash
+      run: |
+        az group create \
+          --name "rg-kvmi-${{ inputs.environment }}" \
+          --location "westeurope" \
+          --tags environment="${{ inputs.environment }}" project="keyvault-managed-identity" \
+          --output none
+
+    - name: Validate deployment against Azure
+      if: inputs.mode == 'full'
+      shell: bash
+      run: |
+        INFRA="${{ steps.dirs.outputs.infra }}"
+        az deployment group validate \
+          --resource-group "rg-kvmi-${{ inputs.environment }}" \
+          --template-file "${INFRA}/main.bicep" \
+          --parameters "${INFRA}/environments/${{ inputs.environment }}.bicepparam"

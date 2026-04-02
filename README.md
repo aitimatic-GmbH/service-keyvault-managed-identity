@@ -119,18 +119,18 @@ docs/                       Detaillierte Dokumentation
 
 ## Implementierungs-Phasen
 
-| Phase | Inhalt |
-|-------|--------|
-| 1 | Projekt-Foundation (Struktur, Linter, README) |
-| 2 | Core Key Vault Modul + RBAC + Deploy-Skripte |
-| 3 | Managed Identity + Web App |
-| 4 | Network Security (Private Endpoint, DNS) |
-| 5 | Azure Functions |
-| 6 | VM Integration |
-| 7 | Container Apps + AKS |
-| 8 | Monitoring + Secret Rotation |
-| 9 | CI/CD (GitHub Actions, Submodule-fähig) |
-| 10 | Dokumentation |
+| Phase | Inhalt | Status |
+|-------|--------|--------|
+| 1 | Projekt-Foundation (Struktur, Linter, README) | done |
+| 2 | Core Key Vault Modul + RBAC + Deploy-Skripte | done |
+| 3 | Managed Identity + Web App | done |
+| 4 | Network Security (Private Endpoint, DNS) | done |
+| 5 | Azure Functions | done |
+| 6 | VM Integration | geplant |
+| 7 | Container Apps + AKS | geplant |
+| 8 | Monitoring + Secret Rotation | geplant |
+| 9 | CI/CD (GitHub Actions, Submodule-faehig) | geplant |
+| 10 | Dokumentation | geplant |
 
 ## Design-Entscheidungen
 
@@ -141,6 +141,15 @@ docs/                       Detaillierte Dokumentation
 | Parameter-Format | `.bicepparam` | Native Bicep-Format, Compile-Time-Validierung |
 | Region | `germanywestcentral` | DSGVO-konform (Frankfurt), geringe Latenz für DE |
 | Key Vault SKU | Standard | Kein HSM nötig, Premium wäre 4x teurer |
+
+## Dokumentation
+
+| Dokument | Inhalt |
+|----------|--------|
+| [Konzepte](docs/konzept.md) | Key Vault, Managed Identity, RBAC, Private Endpoints, Identity-Sharing |
+| [Architektur](docs/architecture.md) | Diagramme, Security Design, Naming Convention, Feature Flags |
+| [Deployment Guide](docs/deployment-guide.md) | Validieren, Deployen, Verifizieren, Aufräumen |
+| [Backlog](docs/BACKLOG.md) | Status aller Phasen und offene Aufgaben |
 
 ## Sicherheit
 
